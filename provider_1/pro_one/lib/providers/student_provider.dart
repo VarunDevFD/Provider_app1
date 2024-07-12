@@ -6,11 +6,15 @@ import '../models/student.dart';
 class StudentProvider with ChangeNotifier {
   final Box<Student> _studentBox;
   String? _selectedImagePath;
+  List<Student> _filteredStudents = [];
+  String _searchQuery = '';
 
   StudentProvider() : _studentBox = Hive.box<Student>('students');
 
   List<Student> get students => _studentBox.values.toList();
+  List<Student> get filteredStudents => _filteredStudents;
   String? get imagePath => _selectedImagePath;
+  String get searchQuery => _searchQuery;
 
   void setImagePath(String path) {
     _selectedImagePath = path;
@@ -44,14 +48,15 @@ class StudentProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  List<Student> searchStudents(String query) {
+  void searchStudents(String query) {
     if (query.isEmpty) {
-      return students;
+      _filteredStudents = students;
     } else {
-      return students.where((student) {
+      _filteredStudents = students.where((student) {
         return student.name.toLowerCase().contains(query.toLowerCase());
       }).toList();
     }
+    notifyListeners();
   }
 
   Future<void> pickImage(ImageSource source) async {

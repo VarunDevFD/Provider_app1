@@ -1,5 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:pro_one/models/student.dart';
+import 'package:pro_one/screens/detail_page.dart';
+import 'package:pro_one/screens/search_page.dart';
 import 'package:provider/provider.dart';
 import '../providers/student_provider.dart';
 import '../providers/theme_provider.dart';
@@ -11,6 +14,15 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    // final studentProvider = Provider.of<StudentProvider>(context);
+
+    void navigateToSearchPage() {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SearchPage()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: themeProvider.isDarkMode ? Colors.black : Colors.white,
       appBar: AppBar(
@@ -33,28 +45,33 @@ class HomePage extends StatelessWidget {
               themeProvider.toggleTheme();
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: navigateToSearchPage,
+          ),
         ],
       ),
       body: Consumer<StudentProvider>(
         builder: (context, provider, child) {
+          List<Student> studentsToShow = provider.students;
+
           return GridView.builder(
-            padding: EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(10.0),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 10.0,
               mainAxisSpacing: 10.0,
               childAspectRatio: 3 / 4,
             ),
-            itemCount: provider.students.length,
+            itemCount: studentsToShow.length,
             itemBuilder: (context, index) {
-              final student = provider.students[index];
+              final student = studentsToShow[index];
               return GestureDetector(
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => StudentFormPage(
+                    builder: (context) => StudentDetailsPage(
                       student: student,
-                      index: index,
                     ),
                   ),
                 ),
@@ -84,7 +101,7 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.all(6.0),
+                        padding: const EdgeInsets.all(6.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -139,8 +156,57 @@ class HomePage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => StudentFormPage(
+                                    student: student,
+                                    index: index,
+                                  ),
+                                ),
+                              );
+                            },
+                            color: themeProvider.isDarkMode
+                                ? const Color.fromARGB(255, 218, 96, 96)
+                                : Colors.black,
+                          ),
+                          IconButton(
                             icon: const Icon(Icons.delete),
-                            onPressed: () => provider.deleteStudent(index),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text("Confirm Delete"),
+                                    content: const Text(
+                                        "Are you sure you want to delete this student?"),
+                                    actions: [
+                                      TextButton(
+                                        child: const Text(
+                                          "Cancel",
+                                          style: TextStyle(color: Colors.black),
+                                        ),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: const Text(
+                                          "Delete",
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                        onPressed: () {
+                                          provider.deleteStudent(index);
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
                             color: const Color.fromARGB(186, 236, 32, 18),
                           ),
                         ],
@@ -157,7 +223,7 @@ class HomePage extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => StudentFormPage()),
+            MaterialPageRoute(builder: (context) => const StudentFormPage()),
           );
         },
         backgroundColor: themeProvider.orange2,
