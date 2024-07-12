@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:pro_one/models/student.dart';
 import 'package:pro_one/providers/student_provider.dart';
+import 'package:pro_one/providers/theme_provider.dart';
 import 'package:pro_one/screens/home_page.dart';
 import 'package:provider/provider.dart';
 
@@ -14,6 +15,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => StudentProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -25,28 +27,26 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => StudentProvider()),
-      ],
-      child: MaterialApp(
+    return Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
+      return MaterialApp(
         title: 'Provider_one',
         theme: ThemeData(
           brightness: Brightness.light,
           primarySwatch: Colors.orange,
+          primaryColor: const Color.fromARGB(57, 255, 153, 0),
 
           // Define the ElevatedButton theme
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ButtonStyle(
               foregroundColor: WidgetStateProperty.all<Color>(
-                Color.fromARGB(194, 255, 153, 0),
+                const Color.fromARGB(194, 255, 153, 0),
               ),
             ),
           ),
         ),
         home: HomePage(),
         debugShowCheckedModeBanner: false,
-      ),
-    );
+      );
+    });
   }
 }

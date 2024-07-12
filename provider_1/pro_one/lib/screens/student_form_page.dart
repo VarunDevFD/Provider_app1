@@ -1,19 +1,39 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pro_one/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/student_provider.dart';
 import '../models/student.dart';
 
-class StudentFormPage extends StatelessWidget {
+class StudentFormPage extends StatefulWidget {
   final Student? student;
   final int? index;
 
-  StudentFormPage({super.key, this.student, this.index});
+  const StudentFormPage({super.key, this.student, this.index});
 
+  @override
+  _StudentFormPageState createState() => _StudentFormPageState();
+}
+
+class _StudentFormPageState extends State<StudentFormPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.student != null) {
+      _nameController.text = widget.student!.name;
+      _ageController.text = widget.student!.age;
+      Provider.of<StudentProvider>(context, listen: false)
+          .setImagePath(widget.student!.imagePath);
+    } else {
+      // Clear image path if adding a new student
+      Provider.of<StudentProvider>(context, listen: false).clearSelectedImage();
+    }
+  }
 
   void _pickCamera(BuildContext context) async {
     final pickedFile =
@@ -38,13 +58,13 @@ class StudentFormPage extends StatelessWidget {
         Provider.of<StudentProvider>(context, listen: false).imagePath !=
             null) {
       final newStudent = Student(
-        id: student?.id ?? DateTime.now().millisecondsSinceEpoch,
+        id: widget.student?.id ?? DateTime.now().millisecondsSinceEpoch,
         name: _nameController.text,
         age: _ageController.text,
         imagePath:
             Provider.of<StudentProvider>(context, listen: false).imagePath!,
       );
-      if (student == null) {
+      if (widget.student == null) {
         Provider.of<StudentProvider>(context, listen: false).addStudent(
           newStudent.name,
           newStudent.age,
@@ -52,35 +72,50 @@ class StudentFormPage extends StatelessWidget {
         );
       } else {
         Provider.of<StudentProvider>(context, listen: false).updateStudent(
-          index!,
+          widget.index!,
           newStudent.name,
           newStudent.age,
           newStudent.imagePath,
         );
       }
 
-      // ---Clear selected image path after submission---
+      // Clear selected image path after submission
       Provider.of<StudentProvider>(context, listen: false).clearSelectedImage();
 
-      // ---Navigate back after submission---
+      // Navigate back after submission
       Navigator.pop(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // ---Initialize form fields if editing an existing student---
-    if (student != null) {
-      _nameController.text = student!.name;
-      _ageController.text = student!.age;
-      Provider.of<StudentProvider>(context, listen: false)
-          .setImagePath(student!.imagePath);
-    }
-
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     return Scaffold(
+      backgroundColor: themeProvider.isDarkMode ? Colors.black : Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(57, 255, 153, 0),
-        title: Text(student == null ? 'Add Student' : 'Edit Student'),
+        backgroundColor: themeProvider.orange2,
+        title: Text(
+          widget.student == null ? 'Add Student' : 'Edit Student',
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: themeProvider.isDarkMode
+                ? const Color.fromARGB(255, 218, 96, 96)
+                : Colors.black,
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            size: 30,
+            color: themeProvider.isDarkMode
+                ? const Color.fromARGB(255, 218, 96, 96)
+                : Colors.black,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body: Center(
         child: Padding(
@@ -93,14 +128,13 @@ class StudentFormPage extends StatelessWidget {
                 Consumer<StudentProvider>(
                   builder: (context, provider, child) {
                     return provider.imagePath == null
-                        ? const CircleAvatar(
-                            backgroundColor: Color.fromARGB(57, 255, 153, 0),
+                        ? CircleAvatar(
+                            backgroundColor: themeProvider.orange2,
                             radius: 50,
-                            child: Icon(Icons.person),
+                            child: const Icon(Icons.person),
                           )
                         : CircleAvatar(
-                            backgroundColor:
-                                const Color.fromARGB(57, 255, 153, 0),
+                            backgroundColor: themeProvider.primaryColor,
                             radius: 100,
                             child: ClipOval(
                               child: Image.file(
@@ -118,17 +152,29 @@ class StudentFormPage extends StatelessWidget {
                   children: [
                     ElevatedButton(
                       onPressed: () => _pickCamera(context),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: const Color.fromARGB(255, 218, 96, 96),
+                        backgroundColor: themeProvider.isDarkMode
+                            ? themeProvider.orange2
+                            : Colors.white,
+                      ),
                       child: const Text('Pick Camera'),
                     ),
                     ElevatedButton(
                       onPressed: () => _pickImage(context),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: const Color.fromARGB(255, 218, 96, 96),
+                        backgroundColor: themeProvider.isDarkMode
+                            ? themeProvider.orange2
+                            : Colors.white,
+                      ),
                       child: const Text('Pick Image'),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 Card(
-                  shadowColor: Colors.orange,
+                  shadowColor: themeProvider.orange,
                   child: SizedBox(
                     height: 50,
                     width: 500,
@@ -151,7 +197,7 @@ class StudentFormPage extends StatelessWidget {
                   ),
                 ),
                 Card(
-                  shadowColor: Colors.orange,
+                  shadowColor: themeProvider.orange,
                   child: SizedBox(
                     height: 50,
                     width: 500,
@@ -175,9 +221,17 @@ class StudentFormPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  style: const ButtonStyle(),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: const Color.fromARGB(255, 218, 96, 96),
+                    backgroundColor: themeProvider.isDarkMode
+                        ? themeProvider.orange2
+                        : Colors.white,
+                  ),
                   onPressed: () => _submitForm(context),
-                  child: const Text('Submit'),
+                  child: const Text(
+                    'Submit',
+                    style: TextStyle(fontSize: 20),
+                  ),
                 ),
               ],
             ),
